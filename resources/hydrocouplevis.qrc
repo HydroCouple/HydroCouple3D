@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/HydroCoupleVis">
+        <file alias="Styles">styles/style.qss</file>
+        <file alias="close">images/close.png</file>
+        <file alias="copy">images/copy.png</file>
+        <file alias="default">images/default.png</file>
+        <file alias="new">images/new.png</file>
+        <file alias="open">images/open.png</file>
+        <file alias="pan">images/pan.png</file>
+        <file alias="print">images/print.png</file>
+        <file alias="printpreview">images/printPreview.png</file>
+        <file alias="save">images/save.png</file>
+        <file alias="saveas">images/Saveas.png</file>
+        <file alias="zoomextent">images/zoomextent.png</file>
+        <file alias="zoomin">images/ZoomIn.png</file>
+        <file alias="zoomout">images/ZoomOut.png</file>
+    </qresource>
+</RCC>
