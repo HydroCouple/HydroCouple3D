@@ -9,9 +9,11 @@
 #include <QProgressBar>
 #include <QStandardItemModel>
 #include <iostream>
+#include <QtConcurrent>
 
 using namespace HydroCouple;
 using namespace HydroCouple::Spatial;
+using namespace HydroCouple::SpatioTemporal;
 
 HydroCoupleVis::HydroCoupleVis(QWidget *parent):
   QMainWindow(parent),
@@ -49,6 +51,15 @@ void HydroCoupleVis::addModelComponent(IModelComponent *modelComponent)
         if(items.length())
           t.append(items);
       }
+      else if(dynamic_cast<ITimeGeometryComponentDataItem*>(output))
+      {
+        m_modelGraphicsData[modelComponent][output] = QList<QGraphicsItem*>();
+        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][output];
+        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<ITimeGeometryComponentDataItem*>(output));
+
+        if(items.length())
+          t.append(items);
+      }
       else if(dynamic_cast<IPolyhedralSurfaceComponentDataItem*>(output))
       {
         m_modelGraphicsData[modelComponent][output] = QList<QGraphicsItem*>();
@@ -69,6 +80,15 @@ void HydroCoupleVis::addModelComponent(IModelComponent *modelComponent)
         m_modelGraphicsData[modelComponent][output] = QList<QGraphicsItem*>();
         QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][output];
         QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<IGeometryComponentDataItem*>(output));
+
+        if(items.length())
+          t.append(items);
+      }
+      else if(dynamic_cast<ITimeGeometryComponentDataItem*>(output))
+      {
+        m_modelGraphicsData[modelComponent][output] = QList<QGraphicsItem*>();
+        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][output];
+        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<ITimeGeometryComponentDataItem*>(output));
 
         if(items.length())
           t.append(items);
@@ -100,6 +120,17 @@ bool HydroCoupleVis::removeModelComponent(IModelComponent *modelComponent)
 {
   if(m_modelGraphicsData.contains(modelComponent))
   {
+    QGraphicsScene *scene = ui->graphicsViewHydroCoupleVis->scene();
+
+    QList<QGraphicsView*> views = scene->views();
+
+    for(QGraphicsView *view : views)
+    {
+      view->setUpdatesEnabled(false);
+//      view->setScene(nullptr);
+    }
+
+
     QMap<IComponentDataItem*,QList<QGraphicsItem*>> citems = m_modelGraphicsData[modelComponent];
 
     for( QMap<IComponentDataItem*,QList<QGraphicsItem*> >::iterator it = citems.begin();
@@ -107,9 +138,15 @@ bool HydroCoupleVis::removeModelComponent(IModelComponent *modelComponent)
     {
       for(QGraphicsItem* item : it.value())
       {
-        ui->graphicsViewHydroCoupleVis->scene()->removeItem(item);
+        scene->removeItem(item);
         delete item;
       }
+    }
+
+    for(QGraphicsView *view : views)
+    {
+      view->setScene(scene);
+      view->setUpdatesEnabled(true);
     }
 
     removeFromTreeView(modelComponent);
@@ -135,12 +172,12 @@ void HydroCoupleVis::initializeSignalSlotConnections()
   connect(ui->actionZoomExtent, SIGNAL(triggered()), this, SLOT(onZoomExtent()));
 
 
-  connect(ui->actionNew, SIGNAL(triggered()), this, SLOT(onNewProject()));
+//  connect(ui->actionNew, SIGNAL(triggered()), this, SLOT(onNewProject()));
   connect(ui->actionClose, SIGNAL(triggered()), this, SLOT(close()));
-  connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(onOpenFiles()));
-  connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(onSave()));
-  connect(ui->actionSave_As, SIGNAL(triggered()), this, SLOT(onSaveAs()));
-  connect(ui->actionPrint, SIGNAL(triggered()), this, SLOT(onPrint()));
+//  connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(onOpenFiles()));
+//  connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(onSave()));
+//  connect(ui->actionSave_As, SIGNAL(triggered()), this, SLOT(onSaveAs()));
+//  connect(ui->actionPrint, SIGNAL(triggered()), this, SLOT(onPrint()));
 
   connect(ui->graphicsViewHydroCoupleVis , &GraphicsView::mouseMapCoordinatesChanged,
           this, &HydroCoupleVis::onMouseMapCoordinatesChanged);
@@ -404,19 +441,64 @@ QList<QGraphicsItem*> HydroCoupleVis::addGeometryDataItem(IGeometryComponentData
   QBrush brush = randomBrush();
   QPen pen = randomPen();
 
-  if(geometryData->geometryType() == HydroCouple::Spatial::LineString ||
-     geometryData->geometryType() == HydroCouple::Spatial::LineStringZ ||
-     geometryData->geometryType() == HydroCouple::Spatial::LineStringZM ||
-     geometryData->geometryType() == HydroCouple::Spatial::LineStringM
+  if(geometryData->geometryType() == IGeometry::LineString ||
+     geometryData->geometryType() == IGeometry::LineStringZ ||
+     geometryData->geometryType() == IGeometry::LineStringZM ||
+     geometryData->geometryType() == IGeometry::LineStringM
      )
   {
     brush.setColor(Qt::transparent);
   }
-  else if (geometryData->geometryType() == HydroCouple::Spatial::Polygon ||
-           geometryData->geometryType() == HydroCouple::Spatial::PolygonZ ||
-           geometryData->geometryType() == HydroCouple::Spatial::PolygonZM ||
-           geometryData->geometryType() == HydroCouple::Spatial::PolygonM
-           )
+  else if (geometryData->geometryType() == IGeometry::Polygon ||
+           geometryData->geometryType() == IGeometry::PolygonZ ||
+           geometryData->geometryType() == IGeometry::PolygonZM ||
+           geometryData->geometryType() == IGeometry::PolygonM ||
+           geometryData->geometryType() == IGeometry::Triangle ||
+           geometryData->geometryType() == IGeometry::TriangleZ ||
+           geometryData->geometryType() == IGeometry::TriangleZM ||
+           geometryData->geometryType() == IGeometry::TriangleM)
+  {
+    brush.setColor(Qt::transparent);
+  }
+
+
+  for(int i = 0 ; i < geometryData->geometryCount() ; i++)
+  {
+
+    IGeometry *geom = geometryData->geometry(i);
+    QList<QGraphicsItem*> titems = addGeometry(geom,brush,pen);
+
+    if(titems.length())
+      items.append(titems);
+  }
+
+  onZoomExtent();
+  return items;
+}
+
+QList<QGraphicsItem*> HydroCoupleVis::addGeometryDataItem(ITimeGeometryComponentDataItem *geometryData )
+{
+  QList<QGraphicsItem*> items;
+
+  QBrush brush = randomBrush();
+  QPen pen = randomPen();
+
+  if(geometryData->geometryType() == IGeometry::LineString ||
+     geometryData->geometryType() == IGeometry::LineStringZ ||
+     geometryData->geometryType() == IGeometry::LineStringZM ||
+     geometryData->geometryType() == IGeometry::LineStringM
+     )
+  {
+    brush.setColor(Qt::transparent);
+  }
+  else if (geometryData->geometryType() == IGeometry::Polygon ||
+           geometryData->geometryType() == IGeometry::PolygonZ ||
+           geometryData->geometryType() == IGeometry::PolygonZM ||
+           geometryData->geometryType() == IGeometry::PolygonM ||
+           geometryData->geometryType() == IGeometry::Triangle ||
+           geometryData->geometryType() == IGeometry::TriangleZ ||
+           geometryData->geometryType() == IGeometry::TriangleZM ||
+           geometryData->geometryType() == IGeometry::TriangleM)
   {
     brush.setColor(Qt::transparent);
   }
@@ -440,7 +522,7 @@ QList<QGraphicsItem*> HydroCoupleVis::addGeometryDataItem(IPolyhedralSurfaceComp
 {
 
   QBrush brush = QBrush(Qt::transparent);
-//  QBrush brush = randomBrush();
+  //  QBrush brush = randomBrush();
   QPen pen = randomPen();
   pen.setWidthF(1.0);
   QList<QGraphicsItem*> items = addGeometry(geometryData->polyhedralSurface(),brush,pen);
@@ -454,10 +536,10 @@ QList<QGraphicsItem*> HydroCoupleVis::addGeometry(IGeometry *geometry, const QBr
 
   switch (geometry->geometryType())
   {
-    case GeometryType::Point:
-    case GeometryType::PointZ:
-    case GeometryType::PointZM:
-    case GeometryType::PointM:
+    case IGeometry::Point:
+    case IGeometry::PointZ:
+    case IGeometry::PointZM:
+    case IGeometry::PointM:
       {
         IPoint *point = dynamic_cast<IPoint*>(geometry);
         QGraphicsItem* item = toPoint(point,brush,pen);
@@ -465,10 +547,10 @@ QList<QGraphicsItem*> HydroCoupleVis::addGeometry(IGeometry *geometry, const QBr
         ui->graphicsViewHydroCoupleVis->scene()->addItem(item);
       }
       break;
-    case GeometryType::LineString:
-    case GeometryType::LineStringZ:
-    case GeometryType::LineStringM:
-    case GeometryType::LineStringZM:
+    case IGeometry::LineString:
+    case IGeometry::LineStringZ:
+    case IGeometry::LineStringM:
+    case IGeometry::LineStringZM:
       {
         ILineString *lineString = dynamic_cast<ILineString*>(geometry);
         QGraphicsItem* item = toPath(lineString,brush,pen);
@@ -476,10 +558,14 @@ QList<QGraphicsItem*> HydroCoupleVis::addGeometry(IGeometry *geometry, const QBr
         ui->graphicsViewHydroCoupleVis->scene()->addItem(item);
       }
       break;
-    case GeometryType::Polygon:
-    case GeometryType::PolygonZ:
-    case GeometryType::PolygonM:
-    case GeometryType::PolygonZM:
+    case IGeometry::Polygon:
+    case IGeometry::PolygonZ:
+    case IGeometry::PolygonM:
+    case IGeometry::PolygonZM:
+    case IGeometry::Triangle:
+    case IGeometry::TriangleZ:
+    case IGeometry::TriangleM:
+    case IGeometry::TriangleZM:
       {
         IPolygon *polygon = dynamic_cast<IPolygon*>(geometry);
         QGraphicsItem* item = toPolygon(polygon,brush,pen);
@@ -487,22 +573,22 @@ QList<QGraphicsItem*> HydroCoupleVis::addGeometry(IGeometry *geometry, const QBr
         ui->graphicsViewHydroCoupleVis->scene()->addItem(item);
       }
       break;
-    case GeometryType::GeometryCollection:
-    case GeometryType::GeometryCollectionZ:
-    case GeometryType::GeometryCollectionM:
-    case GeometryType::GeometryCollectionZM:
+    case IGeometry::GeometryCollection:
+    case IGeometry::GeometryCollectionZ:
+    case IGeometry::GeometryCollectionM:
+    case IGeometry::GeometryCollectionZM:
       {
 
       }
       break;
-    case GeometryType::PolyhedralSurface:
-    case GeometryType::PolyhedralSurfaceZ:
-    case GeometryType::PolyhedralSurfaceZM:
-    case GeometryType::PolyhedralSurfaceM:
-    case GeometryType::TIN:
-    case GeometryType::TINZ:
-    case GeometryType::TINZM:
-    case GeometryType::TINM:
+    case IGeometry::PolyhedralSurface:
+    case IGeometry::PolyhedralSurfaceZ:
+    case IGeometry::PolyhedralSurfaceZM:
+    case IGeometry::PolyhedralSurfaceM:
+    case IGeometry::TIN:
+    case IGeometry::TINZ:
+    case IGeometry::TINZM:
+    case IGeometry::TINM:
       {
         IPolyhedralSurface *polySurface = dynamic_cast<IPolyhedralSurface*>(geometry);
 
@@ -541,7 +627,6 @@ QGraphicsEllipseItem *HydroCoupleVis::toPoint(IPoint *point, const QBrush &brush
 
 QGraphicsPathItem *HydroCoupleVis::toPath(ILineString *lineString, const QBrush &brush, const QPen &pen, QGraphicsItem *parent)
 {
-  QPainterPath painterPath;
 
   double minX = std::numeric_limits<double>::max();
   double minY = minX;
@@ -553,11 +638,19 @@ QGraphicsPathItem *HydroCoupleVis::toPath(ILineString *lineString, const QBrush 
     minY = -p->y() < minY ? -p->y() : minY;
   }
 
+  QPainterPath painterPath;
 
   for(int i = 0 ; i < lineString->pointCount() ; i++)
   {
     IPoint *p = lineString->point(i);
-    painterPath.lineTo(p->x() - minX, -p->y() - minY);
+    if(i == 0)
+    {
+      painterPath = QPainterPath(QPointF(p->x() - minX, -p->y() - minY));
+    }
+    else
+    {
+      painterPath.lineTo(p->x() - minX, -p->y() - minY);
+    }
   }
 
   QGraphicsPathItem *pathItem = new QGraphicsPathItem(painterPath, parent);
@@ -577,7 +670,7 @@ QGraphicsPolygonItem *HydroCoupleVis::toPolygon(IPolygon *polygon, const QBrush 
 
   ILineString *exteriorRing = polygon->exteriorRing();
 
-  for(int i = 0 ; i <exteriorRing->pointCount() ; i++)
+  for(int i = 0 ; i <exteriorRing->pointCount() - 1; i++)
   {
     IPoint *p = exteriorRing->point(i);
     minX = p->x() < minX ? p->x() : minX;
@@ -585,7 +678,7 @@ QGraphicsPolygonItem *HydroCoupleVis::toPolygon(IPolygon *polygon, const QBrush 
   }
 
 
-  for(int i = 0 ; i < exteriorRing->pointCount() ; i++)
+  for(int i = 0 ; i < exteriorRing->pointCount() - 1 ; i++)
   {
     IPoint *p = exteriorRing->point(i);
     polyF << QPointF(p->x() - minX , -p->y() - minY);
@@ -606,7 +699,7 @@ QBrush HydroCoupleVis::randomBrush()
 
 QPen HydroCoupleVis::randomPen()
 {
-  QPen p = QPen(randomBrush(),1.5,Qt::SolidLine , Qt::RoundCap , Qt::RoundJoin);
+  QPen p = QPen(randomBrush(),2.0,Qt::SolidLine , Qt::RoundCap , Qt::RoundJoin);
   p.setCosmetic(true);
   return p;
 }
@@ -620,6 +713,18 @@ QColor HydroCoupleVis::randomColor()
   return QColor(r * 255,
                 g * 255,
                 b * 255);
+}
+
+void HydroCoupleVis::clearGraphics()
+{
+
+}
+
+void HydroCoupleVis::removeOldAddNew(IModelComponent *component)
+{
+  ui->statusbarMain->showMessage("Adding results from component " + component->id() , 10000);
+  removeModelComponent(component);
+  addModelComponent(component);
 }
 
 void HydroCoupleVis::onSetCurrentTool(bool toggled)
@@ -648,10 +753,11 @@ void HydroCoupleVis::onSetCurrentTool(bool toggled)
 
 void HydroCoupleVis::onComponentStatusChanged(const QSharedPointer<IComponentStatusChangeEventArgs> &statusArgs)
 {
-  if(statusArgs.data()->status() == HydroCouple::Finished)
+  if(statusArgs->status() == IModelComponent::Finished ||
+     statusArgs->status() == IModelComponent::Initialized)
   {
-    removeModelComponent(statusArgs.data()->component());
-    addModelComponent(statusArgs.data()->component());
+    removeOldAddNew(statusArgs.data()->component());
+    //     QtConcurrent::run(this, &HydroCoupleVis::removeOldAddNew , statusArgs.data()->component());
   }
 }
 

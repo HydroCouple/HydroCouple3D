@@ -4,7 +4,9 @@
 #include <QGLWidget>
 
 GraphicsView::GraphicsView(QWidget *parent)
-  : QGraphicsView(parent), m_mouseIsPressed(false)
+  : QGraphicsView(parent),
+    m_mouseIsPressed(false),
+    m_isBusy(false)
 {
 
   QGLFormat glformat;
@@ -17,19 +19,23 @@ GraphicsView::GraphicsView(QWidget *parent)
   setViewport(glWidget);
 
   QGraphicsScene* cgs = new QGraphicsScene(-10e9, -10e9, 2*10e9, 2*10e9, this);
-
-  setScene(cgs);
   cgs->setBspTreeDepth(8);
+  setScene(cgs);
+  setInteractive(true);
   setAcceptDrops(true);
   setRenderHint(QPainter::SmoothPixmapTransform, true);
   setRenderHint(QPainter::Antialiasing, true);
-//  setRenderHint(QPainter::HighQualityAntialiasing, true);
+  setRenderHint(QPainter::HighQualityAntialiasing, true);
   setRenderHint(QPainter::TextAntialiasing, true);
   setViewportUpdateMode(QGraphicsView::ViewportUpdateMode::FullViewportUpdate);
+  setTransformationAnchor(QGraphicsView::ViewportAnchor::NoAnchor);
   setDragMode(QGraphicsView::DragMode::RubberBandDrag);
   setRubberBandSelectionMode(Qt::ItemSelectionMode::IntersectsItemShape);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  setCacheMode(QGraphicsView::CacheNone);
+  setFocusPolicy(Qt::WheelFocus);
+  setMouseTracking(true);
 
   QPen selectionPen = QPen();
   selectionPen.setCapStyle(Qt::PenCapStyle::RoundCap);
@@ -100,22 +106,28 @@ void GraphicsView::dropEvent(QDropEvent  *event)
 
 void GraphicsView::wheelEvent(QWheelEvent * event)
 {
+
   if (event->delta())
   {
-    double value = event->delta()*0.05 / 120.0;
-
-    setTransformationAnchor(QGraphicsView::ViewportAnchor::AnchorUnderMouse);
+    double value = event->delta() * 0.05 / 120.0;
 
     scale(1 + value, 1 + value);
+    centerOn(m_scenePosition);
 
-    setTransformationAnchor(QGraphicsView::ViewportAnchor::NoAnchor);
+    QPointF delta_viewport_pos = m_viewportPosition - QPointF(viewport()->width() / 2.0,
+                                                              viewport()->height() / 2.0);
+    QPointF viewport_center = mapFromScene(m_scenePosition) - delta_viewport_pos;
+    centerOn(mapToScene(viewport_center.toPoint()));
 
     event->accept();
   }
+
 }
 
 void GraphicsView::mousePressEvent(QMouseEvent * event)
 {
+
+
   m_mousePressPosition = mapToScene(event->pos());
   m_mouseIsPressed = true;
 
@@ -143,10 +155,14 @@ void GraphicsView::mousePressEvent(QMouseEvent * event)
         }
       }
   }
+
 }
 
 void GraphicsView::mouseReleaseEvent(QMouseEvent * event)
 {
+
+
+
   QPointF currentPos = mapToScene(event->pos());
 
   if (event->buttons().testFlag(Qt::MouseButton::MiddleButton))
@@ -188,10 +204,13 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent * event)
   }
 
   m_mouseIsPressed = false;
+
 }
 
 void GraphicsView::mouseMoveEvent(QMouseEvent * event)
 {
+
+
   QPoint ePos = event->pos();
   QPointF currentPos = mapToScene(ePos);
 
@@ -199,7 +218,7 @@ void GraphicsView::mouseMoveEvent(QMouseEvent * event)
   {
     if (event->buttons().testFlag(Qt::MouseButton::MiddleButton))
     {
-      QPointF t = currentPos - m_previousMousePosition;
+      QPointF t = currentPos - m_scenePosition;
       translate(t.x(), t.y());
     }
     else
@@ -216,7 +235,7 @@ void GraphicsView::mouseMoveEvent(QMouseEvent * event)
           break;
         case GraphicsView::Pan:
           {
-            QPointF t = currentPos - m_previousMousePosition;
+            QPointF t = currentPos - m_scenePosition;
             translate(t.x(), t.y());
           }
           break;
@@ -232,13 +251,14 @@ void GraphicsView::mouseMoveEvent(QMouseEvent * event)
     QGraphicsView::mouseMoveEvent(event);
   }
 
-
-  m_previousMousePosition = mapToScene(ePos);
+  m_viewportPosition = QPointF(ePos);
+  m_scenePosition = mapToScene(ePos);
 
   QString status = "Screen Coordinates : " + QString::number(ePos.x()) + " ," + QString::number(ePos.y()) +
                    " | Map Coordinates : " + QString::number(currentPos.x(),'g',10) + " ," + QString::number(-currentPos.y(), 'g',10);
 
   emit mouseMapCoordinatesChanged(currentPos.x() , -currentPos.y(), status);
+
 }
 
 bool GraphicsView::viewportEvent(QEvent *event)
@@ -254,31 +274,35 @@ bool GraphicsView::viewportEvent(QEvent *event)
 
         if (touchPoints.count() == 2)
         {
-          //          // determine scale factor
-          //          const QTouchEvent::TouchPoint &touchPoint0 = touchPoints.first();
-          //          const QTouchEvent::TouchPoint &touchPoint1 = touchPoints.last();
+          // determine scale factor
+          const QTouchEvent::TouchPoint &touchPoint0 = touchPoints.first();
+          const QTouchEvent::TouchPoint &touchPoint1 = touchPoints.last();
 
-          //          qreal currentScaleFactor = QLineF(touchPoint0.pos(), touchPoint1.pos()).length()
-          //                                     / QLineF(touchPoint0.startPos(), touchPoint1.startPos()).length();
+          qreal currentScaleFactor = QLineF(touchPoint0.pos(), touchPoint1.pos()).length()
+                                     / QLineF(touchPoint0.startPos(), touchPoint1.startPos()).length();
 
-          //          if (touchEvent->touchPointStates() & Qt::TouchPointReleased)
-          //          {
-          //            // if one of the fingers is released, remember the current scale
-          //            // factor so that adding another finger later will continue zooming
-          //            // by adding new scale factor to the existing remembered value.
-          //            totalScaleFactor *= currentScaleFactor;
-          //            currentScaleFactor = 1.0;
-          //          }
+          if (touchEvent->touchPointStates() & Qt::TouchPointReleased)
+          {
+            // if one of the fingers is released, remember the current scale
+            // factor so that adding another finger later will continue zooming
+            // by adding new scale factor to the existing remembered value.
+            totalScaleFactor *= currentScaleFactor;
+            currentScaleFactor = 1.0;
+          }
 
-          //          setTransformationAnchor(QGraphicsView::ViewportAnchor::AnchorUnderMouse);
-          //          setTransform(QTransform().scale(totalScaleFactor*currentScaleFactor, totalScaleFactor*currentScaleFactor));
-          //          setTransformationAnchor(QGraphicsView::ViewportAnchor::NoAnchor);
+          setTransformationAnchor(QGraphicsView::ViewportAnchor::AnchorUnderMouse);
+          setTransform(QTransform().scale(totalScaleFactor*currentScaleFactor, totalScaleFactor*currentScaleFactor));
+          setTransformationAnchor(QGraphicsView::ViewportAnchor::NoAnchor);
         }
+
+        m_isBusy = false;
+
         return true;
       }
     default:
       break;
   }
+
   return QGraphicsView::viewportEvent(event);
 }
 

@@ -99,6 +99,8 @@ class HYDROCOUPLEVIS_EXPORT HydroCoupleVis : public QMainWindow
 
     QList<QGraphicsItem*> addGeometryDataItem(HydroCouple::Spatial::IGeometryComponentDataItem *geometryData);
 
+    QList<QGraphicsItem*> addGeometryDataItem(HydroCouple::SpatioTemporal::ITimeGeometryComponentDataItem *geometryData);
+
     QList<QGraphicsItem*> addGeometryDataItem(HydroCouple::Spatial::IPolyhedralSurfaceComponentDataItem *geometryData);
 
     QList<QGraphicsItem*> addGeometry(HydroCouple::Spatial::IGeometry *geometry,
@@ -125,6 +127,8 @@ class HYDROCOUPLEVIS_EXPORT HydroCoupleVis : public QMainWindow
 
     void clearGraphics();
 
+    void removeOldAddNew(HydroCouple::IModelComponent *component);
+
   signals:
 
     void currentToolChanged(int currentTool);
@@ -146,7 +150,9 @@ class HYDROCOUPLEVIS_EXPORT HydroCoupleVis : public QMainWindow
     void onPreferences();
 
     void onAbout();
+
   private:
+
     QProgressBar *m_progressBar;
     QStandardItemModel *m_tableOfContentTreeViewModel;
     GraphicsView::Tool m_currentTool;
