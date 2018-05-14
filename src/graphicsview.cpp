@@ -1,3 +1,22 @@
+/*!
+ * \author Caleb Amoa Buahin <caleb.buahin@gmail.com>
+ * \version 1.0.0
+ * \description
+ * \license
+ * This file and its associated files, and libraries are free software.
+ * You can redistribute it and/or modify it under the terms of the
+ * Lesser GNU General Public License as published by the Free Software Foundation;
+ * either version 3 of the License, or (at your option) any later version.
+ * This file and its associated files is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.(see <http://www.gnu.org/licenses/> for details)
+ * \copyright Copyright 2014-2018, Caleb Buahin, All rights reserved.
+ * \date 2014-2018
+ * \pre
+ * \bug
+ * \warning
+ * \todo
+ */
+
 #include "stdafx.h"
 #include "graphicsview.h"
 #include <QWheelEvent>
@@ -20,19 +39,27 @@ GraphicsView::GraphicsView(QWidget *parent)
 
   QGraphicsScene* cgs = new QGraphicsScene(-10e9, -10e9, 2*10e9, 2*10e9, this);
   cgs->setBspTreeDepth(8);
+  cgs->setItemIndexMethod(QGraphicsScene::ItemIndexMethod::BspTreeIndex);
+  cgs->setSortCacheEnabled(true);
+
   setScene(cgs);
   setInteractive(true);
   setAcceptDrops(true);
+
+
   setRenderHint(QPainter::SmoothPixmapTransform, true);
   setRenderHint(QPainter::Antialiasing, true);
   setRenderHint(QPainter::HighQualityAntialiasing, true);
   setRenderHint(QPainter::TextAntialiasing, true);
   setViewportUpdateMode(QGraphicsView::ViewportUpdateMode::FullViewportUpdate);
+
   setTransformationAnchor(QGraphicsView::ViewportAnchor::NoAnchor);
   setDragMode(QGraphicsView::DragMode::RubberBandDrag);
   setRubberBandSelectionMode(Qt::ItemSelectionMode::IntersectsItemShape);
+
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
   setCacheMode(QGraphicsView::CacheNone);
   setFocusPolicy(Qt::WheelFocus);
   setMouseTracking(true);
@@ -41,6 +68,11 @@ GraphicsView::GraphicsView(QWidget *parent)
   selectionPen.setCapStyle(Qt::PenCapStyle::RoundCap);
   selectionPen.setWidthF(0.0f);
   selectionPen.setColor(QColor(0, 150, 255, 150));
+
+  setOptimizationFlags(QGraphicsView::DontClipPainter);
+  setOptimizationFlags(QGraphicsView::DontSavePainterState);
+  setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing);
+  setCacheMode(QGraphicsView::CacheBackground);
 
   QBrush brush = QBrush(QColor(0, 150, 255, 80));
   m_zoomItem.setPen(selectionPen);

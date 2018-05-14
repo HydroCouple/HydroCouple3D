@@ -1,3 +1,22 @@
+/*!
+ * \author Caleb Amoa Buahin <caleb.buahin@gmail.com>
+ * \version 1.0.0
+ * \description
+ * \license
+ * This file and its associated files, and libraries are free software.
+ * You can redistribute it and/or modify it under the terms of the
+ * Lesser GNU General Public License as published by the Free Software Foundation;
+ * either version 3 of the License, or (at your option) any later version.
+ * This file and its associated files is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.(see <http://www.gnu.org/licenses/> for details)
+ * \copyright Copyright 2014-2018, Caleb Buahin, All rights reserved.
+ * \date 2014-2018
+ * \pre
+ * \bug
+ * \warning
+ * \todo
+ */
+
 #ifndef HYDROCOUPLEVIS_CPP
 #define HYDROCOUPLEVIS_CPP
 
@@ -71,39 +90,67 @@ void HydroCoupleVis::addModelComponent(IModelComponent *modelComponent)
       }
     }
 
-
-    for(IArgument* output : modelComponent->arguments())
+    for(IInput* input : modelComponent->inputs())
     {
-
-      if(dynamic_cast<IGeometryComponentDataItem*>(output))
+      if(dynamic_cast<IGeometryComponentDataItem*>(input))
       {
-        m_modelGraphicsData[modelComponent][output] = QList<QGraphicsItem*>();
-        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][output];
-        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<IGeometryComponentDataItem*>(output));
-
-        if(items.length())
-          t.append(items);
-      }
-      else if(dynamic_cast<ITimeGeometryComponentDataItem*>(output))
-      {
-        m_modelGraphicsData[modelComponent][output] = QList<QGraphicsItem*>();
-        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][output];
-        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<ITimeGeometryComponentDataItem*>(output));
+        m_modelGraphicsData[modelComponent][input] = QList<QGraphicsItem*>();
+        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][input];
+        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<IGeometryComponentDataItem*>(input));
 
         if(items.length())
           t.append(items);
       }
-      else if(dynamic_cast<IPolyhedralSurfaceComponentDataItem*>(output))
+      else if(dynamic_cast<ITimeGeometryComponentDataItem*>(input))
       {
-        m_modelGraphicsData[modelComponent][output] = QList<QGraphicsItem*>();
-        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][output];
-        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<IPolyhedralSurfaceComponentDataItem*>(output));
+        m_modelGraphicsData[modelComponent][input] = QList<QGraphicsItem*>();
+        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][input];
+        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<ITimeGeometryComponentDataItem*>(input));
+
+        if(items.length())
+          t.append(items);
+      }
+      else if(dynamic_cast<IPolyhedralSurfaceComponentDataItem*>(input))
+      {
+        m_modelGraphicsData[modelComponent][input] = QList<QGraphicsItem*>();
+        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<IPolyhedralSurfaceComponentDataItem*>(input));
+        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][input];
+
         if(items.length())
           t.append(items);
       }
     }
 
+    for(IArgument* argument : modelComponent->arguments())
+    {
 
+      if(dynamic_cast<IGeometryComponentDataItem*>(argument))
+      {
+        m_modelGraphicsData[modelComponent][argument] = QList<QGraphicsItem*>();
+        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][argument];
+        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<IGeometryComponentDataItem*>(argument));
+
+        if(items.length())
+          t.append(items);
+      }
+      else if(dynamic_cast<ITimeGeometryComponentDataItem*>(argument))
+      {
+        m_modelGraphicsData[modelComponent][argument] = QList<QGraphicsItem*>();
+        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][argument];
+        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<ITimeGeometryComponentDataItem*>(argument));
+
+        if(items.length())
+          t.append(items);
+      }
+      else if(dynamic_cast<IPolyhedralSurfaceComponentDataItem*>(argument))
+      {
+        m_modelGraphicsData[modelComponent][argument] = QList<QGraphicsItem*>();
+        QList<QGraphicsItem*> & t = m_modelGraphicsData[modelComponent][argument];
+        QList<QGraphicsItem*> items = addGeometryDataItem(dynamic_cast<IPolyhedralSurfaceComponentDataItem*>(argument));
+        if(items.length())
+          t.append(items);
+      }
+    }
 
 
     connect(dynamic_cast<QObject*>(modelComponent), SIGNAL(componentStatusChanged(const QSharedPointer<HydroCouple::IComponentStatusChangeEventArgs> &)),
@@ -126,10 +173,8 @@ bool HydroCoupleVis::removeModelComponent(IModelComponent *modelComponent)
 
     for(QGraphicsView *view : views)
     {
-      view->setUpdatesEnabled(false);
-//      view->setScene(nullptr);
+      view->setScene(nullptr);
     }
-
 
     QMap<IComponentDataItem*,QList<QGraphicsItem*>> citems = m_modelGraphicsData[modelComponent];
 
@@ -138,15 +183,14 @@ bool HydroCoupleVis::removeModelComponent(IModelComponent *modelComponent)
     {
       for(QGraphicsItem* item : it.value())
       {
-        scene->removeItem(item);
-        delete item;
+        if(item->parentItem() == nullptr)
+          delete item;
       }
     }
 
     for(QGraphicsView *view : views)
     {
       view->setScene(scene);
-      view->setUpdatesEnabled(true);
     }
 
     removeFromTreeView(modelComponent);
@@ -172,12 +216,12 @@ void HydroCoupleVis::initializeSignalSlotConnections()
   connect(ui->actionZoomExtent, SIGNAL(triggered()), this, SLOT(onZoomExtent()));
 
 
-//  connect(ui->actionNew, SIGNAL(triggered()), this, SLOT(onNewProject()));
+  //  connect(ui->actionNew, SIGNAL(triggered()), this, SLOT(onNewProject()));
   connect(ui->actionClose, SIGNAL(triggered()), this, SLOT(close()));
-//  connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(onOpenFiles()));
-//  connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(onSave()));
-//  connect(ui->actionSave_As, SIGNAL(triggered()), this, SLOT(onSaveAs()));
-//  connect(ui->actionPrint, SIGNAL(triggered()), this, SLOT(onPrint()));
+  //  connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(onOpenFiles()));
+  //  connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(onSave()));
+  //  connect(ui->actionSave_As, SIGNAL(triggered()), this, SLOT(onSaveAs()));
+  //  connect(ui->actionPrint, SIGNAL(triggered()), this, SLOT(onPrint()));
 
   connect(ui->graphicsViewHydroCoupleVis , &GraphicsView::mouseMapCoordinatesChanged,
           this, &HydroCoupleVis::onMouseMapCoordinatesChanged);
@@ -218,9 +262,9 @@ void HydroCoupleVis::initializeGUIElements()
 
 #ifdef _WIN32 // note the underscore: without it, it's not msdn official!
 
-  actionPreferences->setText("Options");
-  menuTools->addAction(actionPreferences);
-  menuHelp->addAction(actionAbout);
+  //  actionPreferences->setText("Options");
+  //  menuTools->addAction(actionPreferences);
+  //  menuHelp->addAction(actionAbout);
 
 #elif __unix__ // all unices, not all compilers
 #elif __linux__
@@ -273,34 +317,42 @@ void HydroCoupleVis::addToTreeView(IModelComponent *modelComponent)
 {
   if(m_modelGraphicsData.contains(modelComponent))
   {
-    QStandardItem *modelItem = new QStandardItem(QIcon(), modelComponent->caption());
-    modelItem->setCheckable(true);
-    modelItem->setUserTristate(false);
-    QHash<QString,QVariant> data;
-    data["ModelId"] = modelComponent->id();
-    data["NodeType"] = "Model";
-    modelItem->setData(data,Qt::UserRole);
+    QStandardItem *modelComponentItems = new QStandardItem(QIcon(), modelComponent->caption());
+    modelComponentItems->setCheckable(true);
+    modelComponentItems->setUserTristate(false);
+    QHash<QString,QVariant> modelComponentData;
+    modelComponentData["ModelId"] = modelComponent->id();
+    modelComponentData["NodeType"] = "Model";
+    modelComponentItems->setData(modelComponentData,Qt::UserRole);
 
-    m_tableOfContentTreeViewModel->invisibleRootItem()->appendRow(modelItem);
+    m_tableOfContentTreeViewModel->invisibleRootItem()->appendRow(modelComponentItems);
 
-    QStandardItem *argumentHeaders = new QStandardItem(QIcon(), "Arguments");
-    argumentHeaders->setCheckable(true);
-    argumentHeaders->setUserTristate(false);
-    QHash<QString,QVariant> dataArgs;
-    dataArgs["ModelId"] = modelComponent->id();
-    dataArgs["NodeType"] = "ArgumentsHeader";
-    argumentHeaders->setData(dataArgs,Qt::UserRole);
-    modelItem->appendRow(argumentHeaders);
+    QStandardItem *argumentDataItems = new QStandardItem(QIcon(), "Arguments");
+    argumentDataItems->setCheckable(true);
+    argumentDataItems->setUserTristate(false);
+    QHash<QString,QVariant> argumentsData;
+    argumentsData["ModelId"] = modelComponent->id();
+    argumentsData["NodeType"] = "ArgumentsHeader";
+    argumentDataItems->setData(argumentsData,Qt::UserRole);
+    modelComponentItems->appendRow(argumentDataItems);
 
+    QStandardItem *inputDataItems = new QStandardItem(QIcon(), "Inputs");
+    inputDataItems->setCheckable(true);
+    inputDataItems->setUserTristate(false);
+    QHash<QString,QVariant> inputData;
+    inputData["ModelId"] = modelComponent->id();
+    inputData["NodeType"] = "InputsHeader";
+    inputDataItems->setData(inputData,Qt::UserRole);
+    modelComponentItems->appendRow(inputDataItems);
 
-    QStandardItem *argumentOutputs = new QStandardItem(QIcon(), "Outputs");
-    argumentOutputs->setCheckable(true);
-    argumentOutputs->setUserTristate(false);
-    QHash<QString,QVariant> outputArgs;
-    outputArgs["ModelId"] = modelComponent->id();
-    outputArgs["NodeType"] = "OutputsHeader";
-    argumentOutputs->setData(outputArgs,Qt::UserRole);
-    modelItem->appendRow(argumentOutputs);
+    QStandardItem *outputDataItems = new QStandardItem(QIcon(), "Outputs");
+    outputDataItems->setCheckable(true);
+    outputDataItems->setUserTristate(false);
+    QHash<QString,QVariant> outputData;
+    outputData["ModelId"] = modelComponent->id();
+    outputData["NodeType"] = "OutputsHeader";
+    outputDataItems->setData(outputData,Qt::UserRole);
+    modelComponentItems->appendRow(outputDataItems);
 
     for(IComponentDataItem *cdataItem : m_modelGraphicsData[modelComponent].keys())
     {
@@ -314,10 +366,21 @@ void HydroCoupleVis::addToTreeView(IModelComponent *modelComponent)
         outputArgs["NodeType"] = "Output";
         outputArgs["ComponentDataItemId"] = cdataItem->id();
         outputItem->setData(outputArgs,Qt::UserRole);
-
-        argumentOutputs->appendRow(outputItem);
+        outputDataItems->appendRow(outputItem);
       }
-      else
+      else if(dynamic_cast<IInput*>(cdataItem))
+      {
+        QStandardItem *inputItem = new QStandardItem(QIcon(), cdataItem->caption());
+        inputItem->setCheckable(true);
+        inputItem->setUserTristate(false);
+        QHash<QString,QVariant> inputArgs;
+        inputArgs["ModelId"] = modelComponent->id();
+        inputArgs["NodeType"] = "Input";
+        inputArgs["ComponentDataItemId"] = cdataItem->id();
+        inputItem->setData(inputArgs,Qt::UserRole);
+        inputDataItems->appendRow(inputItem);
+      }
+      else if(dynamic_cast<IArgument*>(cdataItem))
       {
         QStandardItem *argumentItem = new QStandardItem(QIcon(), cdataItem->caption());
         argumentItem->setCheckable(true);
@@ -328,12 +391,12 @@ void HydroCoupleVis::addToTreeView(IModelComponent *modelComponent)
         dataArgs["ComponentDataItemId"] = cdataItem->id();
         argumentItem->setData(dataArgs,Qt::UserRole);
 
-        argumentHeaders->appendRow(argumentItem);
+        argumentDataItems->appendRow(argumentItem);
       }
     }
 
     ui->treeViewModelComponents->expandToDepth(1);
-    modelItem->setCheckState(Qt::Checked);
+    modelComponentItems->setCheckState(Qt::Checked);
   }
 }
 
@@ -350,7 +413,6 @@ void HydroCoupleVis::removeFromTreeView(IModelComponent *modelComponent)
       m_tableOfContentTreeViewModel->removeRow(item->row());
     }
   }
-
 }
 
 void HydroCoupleVis::readSettings()
