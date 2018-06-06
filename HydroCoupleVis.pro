@@ -26,7 +26,7 @@ QT += core widgets gui opengl concurrent
 INCLUDEPATH += ./include \
                 /usr/local/include \
                ../HydroCouple/include \
-               ../../QPropertyModel/include
+               ../QPropertyModel/include
 
 PRECOMPILED_HEADER += ./include/stdafx.h
 
@@ -51,15 +51,15 @@ linux{
 CONFIG(debug,debug|release) {
 
    macx{
-   LIBS += -L$$PWD/../../QPropertyModel/build/debug -lQPropertyModel.1.0.0
+   LIBS += -L$$PWD/../QPropertyModel/build/debug -lQPropertyModel.1.0.0
      }
 
    linux{
-   LIBS += -L$$PWD/../../QPropertyModel/build/debug -lQPropertyModel.so.1.0.0
+   LIBS += -L$$PWD/../QPropertyModel/build/debug -lQPropertyModel.so.1.0.0
      }
 
    win32{
-   LIBS += -L$$PWD/../../QPropertyModel/build/debug -lQPropertyModel1
+   LIBS += -L$$PWD/../QPropertyModel/build/debug -lQPropertyModel1
      }
 
    DESTDIR = $$PWD/build/debug
@@ -72,15 +72,15 @@ CONFIG(debug,debug|release) {
 CONFIG(release,debug|release){
 
    macx{
-      LIBS += -L$$PWD/../../QPropertyModel/lib/macx -lQPropertyModel.1.0.0
+      LIBS += -L$$PWD/../QPropertyModel/lib/macx -lQPropertyModel.1.0.0
      }
 
   linux{
-      LIBS += -L$$PWD/../../QPropertyModel/lib/linux -lQPropertyModel.so.1.0.0
+      LIBS += -L$$PWD/../QPropertyModel/lib/linux -lQPropertyModel.so.1.0.0
      }
 
   win32{
-      LIBS += -L$$PWD/../../QPropertyModel/lib/win32 -lQPropertyModel1
+      LIBS += -L$$PWD/../QPropertyModel/lib/win32 -lQPropertyModel1
      }
 
      contains(DEFINES,HYDROCOUPLEVIS_LIBRARY){
