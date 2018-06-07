@@ -12,6 +12,10 @@ DEFINES += UTAH_CHPC
 CONFIG += c++11
 CONFIG += debug_and_release
 
+*msvc* { # visual studio spec filter
+      QMAKE_CXXFLAGS += /MP /O2
+  }
+
 contains(DEFINES,HYDROCOUPLEVIS_LIBRARY){
   TEMPLATE = lib
   message("Compiling as library")
