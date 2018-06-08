@@ -52,6 +52,11 @@ linux{
      }
 }
 
+win32{
+    QMAKE_CXXFLAGS_RELEASE = $$QMAKE_CXXFLAGS /MT
+    QMAKE_CXXFLAGS_DEBUG = $$QMAKE_CXXFLAGS /MTd
+}
+
 CONFIG(debug,debug|release) {
 
    macx{
