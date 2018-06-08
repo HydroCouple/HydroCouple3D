@@ -282,3 +282,4 @@ CMakeLists.txt.user
 *.db
 
 .vscode/.browse.VC.db
+*.exp
