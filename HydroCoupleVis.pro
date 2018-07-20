@@ -1,31 +1,32 @@
 #Author Caleb Amoa Buahin
 #Email caleb.buahin@gmail.com
 #Date 2016
-#License GNU General Public License (see <http: //www.gnu.org/licenses/> for details).
+#License GNU Lesser General Public License (see <http: //www.gnu.org/licenses/> for details).
 
-VERSION = 1.0.0
 TARGET = HydroCoupleVis
+VERSION = 1.0.0
+QT += core widgets gui opengl concurrent
 
 DEFINES += HYDROCOUPLEVIS_LIBRARY
 DEFINES += UTAH_CHPC
+DEFINES += QT_NO_VERSION_TAGGING
 
 CONFIG += c++11
 CONFIG += debug_and_release
-
-*msvc* { # visual studio spec filter
-      QMAKE_CXXFLAGS += /MP /O2
-  }
+CONFIG += optimize_full
 
 contains(DEFINES,HYDROCOUPLEVIS_LIBRARY){
+
   TEMPLATE = lib
   message("Compiling as library")
-} else {
+
+  } else {
+
   TEMPLATE = app
   message("Compiling as application")
+
 }
 
-
-QT += core widgets gui opengl concurrent
 
 INCLUDEPATH += ./include \
                 /usr/local/include \
@@ -43,54 +44,62 @@ SOURCES += ./src/stdafx.cpp \
            ./src/hydrocouplevis.cpp \
            ./src/graphicsview.cpp
 
-linux{
-
-    INCLUDEPATH += /usr/include
-
-    contains(DEFINES,UTAH_CHPC){
-         message("Compiling on CHPC")
-     }
-}
-
 win32{
-    QMAKE_CXXFLAGS_RELEASE = $$QMAKE_CXXFLAGS /MD
-    QMAKE_CXXFLAGS_DEBUG = $$QMAKE_CXXFLAGS /MDd
+    QMAKE_CXXFLAGS += /MP
 }
 
 CONFIG(debug,debug|release) {
 
-   macx{
-   LIBS += -L$$PWD/../QPropertyModel/build/debug -lQPropertyModel.1.0.0
+    win32 {
+       QMAKE_CXXFLAGS_DEBUG = $$QMAKE_CXXFLAGS /MDd  /O2
+    }
+
+    macx {
+     QMAKE_CFLAGS_DEBUG = $$QMAKE_CFLAGS -g -O3
+     QMAKE_CXXFLAGS_DEBUG = $$QMAKE_CXXFLAGS -g -O3
+    }
+
+    linux {
+     QMAKE_CFLAGS_DEBUG = $$QMAKE_CFLAGS -g -O3
+     QMAKE_CXXFLAGS_DEBUG = $$QMAKE_CXXFLAGS -g -O3
+    }
+
+     macx{
+        LIBS += -L../QPropertyModel/build/debug -lQPropertyModel
      }
 
-   linux{
-   LIBS += -L$$PWD/../QPropertyModel/build/debug -lQPropertyModel.so.1.0.0
+     linux{
+        LIBS += -L../QPropertyModel/build/debug -lQPropertyModel
      }
 
-   win32{
-   LIBS += -L$$PWD/../QPropertyModel/build/debug -lQPropertyModel1
+     win32{
+        LIBS += -L../QPropertyModel/build/debug -lQPropertyModel1
      }
 
-   DESTDIR = $$PWD/build/debug
-   OBJECTS_DIR = $$DESTDIR/.obj
-   MOC_DIR = $$DESTDIR/.moc
-   RCC_DIR = $$DESTDIR/.qrc
-   UI_DIR = $$DESTDIR/.ui
+     DESTDIR = $$PWD/build/debug
+     OBJECTS_DIR = $$DESTDIR/.obj
+     MOC_DIR = $$DESTDIR/.moc
+     RCC_DIR = $$DESTDIR/.qrc
+     UI_DIR = $$DESTDIR/.ui
 }
 
 CONFIG(release,debug|release){
 
-   macx{
-      LIBS += -L$$PWD/../QPropertyModel/lib/macx -lQPropertyModel.1.0.0
-     }
+   win32 {
+    QMAKE_CXXFLAGS_RELEASE = $$QMAKE_CXXFLAGS /MD
+   }
 
-  linux{
-      LIBS += -L$$PWD/../QPropertyModel/lib/linux -lQPropertyModel.so.1.0.0
-     }
+    macx {
+      LIBS += -L../QPropertyModel/lib/macx -lQPropertyModel
+    }
 
-  win32{
-      LIBS += -L$$PWD/../QPropertyModel/lib/win32 -lQPropertyModel1
-     }
+    linux {
+      LIBS += -L../QPropertyModel/lib/linux -lQPropertyModel
+    }
+
+    win32 {
+      LIBS += -L../QPropertyModel/lib/win32 -lQPropertyModel1
+    }
 
      contains(DEFINES,HYDROCOUPLEVIS_LIBRARY){
          #MacOS
@@ -139,5 +148,5 @@ RESOURCES += ./resources/hydrocouplevis.qrc
 RC_FILE = ./resources/HydroCoupleVis.rc
 
 macx{
-ICON = ./resources/HydroCoupleVis.icns
+    ICON = ./resources/HydroCoupleVis.icns
 }
