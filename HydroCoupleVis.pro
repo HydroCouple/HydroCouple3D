@@ -46,12 +46,13 @@ SOURCES += ./src/stdafx.cpp \
 
 win32{
     QMAKE_CXXFLAGS += /MP
+    QMAKE_LFLAGS += /MP /incremental /debug:fastlink
 }
 
 CONFIG(debug,debug|release) {
 
     win32 {
-       QMAKE_CXXFLAGS_DEBUG = $$QMAKE_CXXFLAGS /MDd  /O2
+      QMAKE_CXXFLAGS += /MDd  /O2
     }
 
     macx {
