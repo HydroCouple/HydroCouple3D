@@ -46,7 +46,7 @@ SOURCES += ./src/stdafx.cpp \
 
 win32{
     QMAKE_CXXFLAGS += /MP
-    QMAKE_LFLAGS += /MP /incremental /debug:fastlink
+    QMAKE_LFLAGS += /incremental /debug:fastlink
 }
 
 CONFIG(debug,debug|release) {
