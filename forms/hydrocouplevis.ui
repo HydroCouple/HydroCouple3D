@@ -29,7 +29,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1486</width>
+     <width>1221</width>
      <height>22</height>
     </rect>
    </property>
@@ -51,7 +51,6 @@
     <addaction name="separator"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_As"/>
-    <addaction name="actionExport"/>
     <addaction name="separator"/>
     <addaction name="actionPrint"/>
     <addaction name="separator"/>
@@ -83,7 +82,7 @@
    <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
   </widget>
-    <widget class="QToolBar" name="toolBarMain">
+  <widget class="QToolBar" name="toolBarMain">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
      <horstretch>0</horstretch>
@@ -130,7 +129,11 @@
    <widget class="QWidget" name="dockWidgetContents">
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QTreeView" name="treeViewModelComponents"/>
+      <widget class="QTreeView" name="treeViewModelComponents">
+       <property name="sortingEnabled">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -336,6 +339,8 @@
    <header>graphicsview.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../resources/hydrocouplevis.qrc"/>
+ </resources>
  <connections/>
 </ui>
